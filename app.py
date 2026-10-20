@@ -464,10 +464,9 @@ elif page == "Patient Prediction":
         )
 
         st.dataframe(patient, use_container_width=True)
-                pdf_bytes=create_prediction_pdf(
-            patient, predicted_label, probability
-        )
-
+        pdf_bytes = create_prediction_pdf(
+        patient, predicted_label, probability
+    )       
         st.download_button(
             label="📄 Download Prediction Report (PDF)",
             data=pdf_bytes,
