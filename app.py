@@ -1,3 +1,7 @@
+from io import BytesIO
+from datetime import datetime
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
 
 from pathlib import Path
 
@@ -81,6 +85,67 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+def create_prediction_pdf(patient, predicted_label, probability):
+    buffer = BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
+
+    pdf.setTitle("Diabetes Prediction Report")
+
+    pdf.setFont("Helvetica-Bold", 20)
+    pdf.drawString(50, height - 55, "Diabetes Prediction Report")
+
+    pdf.setFont("Helvetica", 10)
+    pdf.drawString(
+        50, height - 80,
+        f"Generated: {datetime.now().strftime('%d-%m-%Y %H:%M')}"
+    )
+
+    pdf.line(50, height - 95, width - 50, height - 95)
+
+    pdf.setFont("Helvetica-Bold", 13)
+    pdf.drawString(50, height - 125, "Patient Input Summary")
+
+    y_position = height - 150
+    pdf.setFont("Helvetica", 11)
+
+    for column, value in patient.iloc[0].items():
+        pdf.drawString(55, y_position, f"{column}: {value}")
+        y_position -= 22
+
+    y_position -= 10
+    pdf.setFont("Helvetica-Bold", 13)
+    pdf.drawString(50, y_position, "Model Output")
+    y_position -= 25
+
+    pdf.setFont("Helvetica", 11)
+    label = "Positive" if predicted_label == 1 else "Negative"
+    pdf.drawString(55, y_position, f"Model label: {label}")
+    y_position -= 22
+    pdf.drawString(
+        55, y_position,
+        f"Estimated probability for label 1: {probability:.1%}"
+    )
+
+    y_position -= 45
+    pdf.setFont("Helvetica-Bold", 11)
+    pdf.drawString(50, y_position, "Important Disclaimer")
+
+    y_position -= 22
+    pdf.setFont("Helvetica", 9)
+    pdf.drawString(
+        50, y_position,
+        "Educational ML output only; not a medical diagnosis."
+    )
+    y_position -= 15
+    pdf.drawString(
+        50, y_position,
+        "Consult a qualified healthcare professional for health concerns."
+    )
+
+    pdf.save()
+    buffer.seek(0)
+    return buffer.getvalue()
 
 # ---------------- LOAD DATA ----------------
 DATA_PATH = Path(__file__).resolve().parent / "diabetes.csv"
@@ -399,6 +464,17 @@ elif page == "Patient Prediction":
         )
 
         st.dataframe(patient, use_container_width=True)
+                pdf_bytes = create_prediction_pdf(
+            patient, predicted_label, probability
+        )
+
+        st.download_button(
+            label="📄 Download Prediction Report (PDF)",
+            data=pdf_bytes,
+            file_name="diabetes_prediction_report.pdf",
+            mime="application/pdf",
+            use_container_width=True,
+        )
 
         st.info(
             "For real health concerns, consult a qualified healthcare "
