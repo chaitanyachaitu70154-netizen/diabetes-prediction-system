@@ -464,7 +464,7 @@ elif page == "Patient Prediction":
         )
 
         st.dataframe(patient, use_container_width=True)
-                pdf_bytes = create_prediction_pdf(
+                pdf_bytes=create_prediction_pdf(
             patient, predicted_label, probability
         )
 
